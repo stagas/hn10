@@ -17,6 +17,7 @@ interface StoryRow {
   posted_at: number | null;
   textlog_post_id: string | null;
   last_error: string | null;
+  summary_added_at: number | null;
 }
 
 export class StoryStore {
@@ -55,6 +56,7 @@ export class StoryStore {
       CREATE INDEX IF NOT EXISTS stories_publish_queue
         ON stories(status, next_attempt_at, first_seen_at);
     `);
+    this.addColumnIfMissing("summary_added_at", "INTEGER");
 
     // A process may have stopped after Textlog accepted a post but before the
     // acknowledgement was saved. Never retry that ambiguous request.
@@ -159,17 +161,28 @@ export class StoryStore {
     }
   }
 
-  markPublished(id: string, postedAt: number, textlogPostId: string | null): void {
+  markPublished(
+    id: string,
+    postedAt: number,
+    textlogPostId: string | null,
+    summaryAdded = false,
+  ): void {
     this.db
       .query(`
         UPDATE stories
         SET status = 'published',
             posted_at = $postedAt,
             textlog_post_id = $textlogPostId,
+            summary_added_at = $summaryAddedAt,
             last_error = NULL
         WHERE id = $id AND status = 'publishing'
       `)
-      .run({ id, postedAt, textlogPostId });
+      .run({
+        id,
+        postedAt,
+        textlogPostId,
+        summaryAddedAt: summaryAdded ? postedAt : null,
+      });
     this.setMetadata("last_published_at", String(postedAt));
   }
 
@@ -214,12 +227,42 @@ export class StoryStore {
     return row?.count ?? 0;
   }
 
+  getPostsNeedingSummary(): StoredStory[] {
+    return this.db
+      .query<StoryRow, []>(`
+        SELECT * FROM stories
+        WHERE status = 'published'
+          AND textlog_post_id IS NOT NULL
+          AND summary_added_at IS NULL
+        ORDER BY posted_at ASC, rowid ASC
+      `)
+      .all()
+      .map(mapStory);
+  }
+
+  markSummaryAdded(id: string, addedAt: number): void {
+    this.db
+      .query(`
+        UPDATE stories
+        SET summary_added_at = $addedAt, last_error = NULL
+        WHERE id = $id AND status = 'published'
+      `)
+      .run({ id, addedAt });
+  }
+
   close(): void {
     this.db.close(true);
   }
 
   private isInitialized(): boolean {
     return this.getMetadata("initialized_at") !== null;
+  }
+
+  private addColumnIfMissing(name: string, declaration: string): void {
+    const columns = this.db.query<{ name: string }, []>("PRAGMA table_info(stories)").all();
+    if (!columns.some((column) => column.name === name)) {
+      this.db.run(`ALTER TABLE stories ADD COLUMN ${name} ${declaration}`);
+    }
   }
 
   private getMetadata(key: string): string | null {
@@ -280,5 +323,6 @@ function mapStory(row: StoryRow): StoredStory {
     postedAt: row.posted_at,
     textlogPostId: row.textlog_post_id,
     lastError: row.last_error,
+    summaryAddedAt: row.summary_added_at,
   };
 }

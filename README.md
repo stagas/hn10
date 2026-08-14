@@ -8,6 +8,8 @@ state.
 Posts have this shape:
 
 ```md
+Tweet-sized article summary (at most 280 characters).
+
 [Story title](example.com/story) [(comments)](news.ycombinator.com/item?id=123) #hn #hn10
 ```
 
@@ -16,6 +18,8 @@ Posts have this shape:
 - The first successful scrape is a silent baseline: its ten stories are saved
   but never posted.
 - Every later story first observed in the top ten is saved and queued once.
+- On startup, previously published posts that have a saved Textlog post ID but
+  no recorded summary are summarized and updated in place with `PATCH`.
 - Published and baseline HN IDs remain in SQLite permanently, so restarts do
   not repost them.
 - The default minimum interval between successful posts is 101 seconds. Since
@@ -39,7 +43,7 @@ Install [Bun 1.3.14](https://bun.sh/) or newer, then:
 ```sh
 bun install --frozen-lockfile
 cp .env.example .env
-# Put a revocable Textlog API key in .env.
+# Put revocable Textlog and OpenRouter API keys in .env.
 set -a; source .env; set +a
 bun run start
 ```
@@ -55,6 +59,9 @@ bun run check
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `TEXTLOG_TOKEN` | required | Revocable Textlog API key |
+| `OPENROUTER_API_KEY` | required | API key used to generate article summaries |
+| `OPENROUTER_MODEL` | `google/gemma-4-26b-a4b-it:free` | OpenRouter summary model |
+| `CHROME_PATH` | auto-detected | Chrome or Chromium executable used to scrape articles |
 | `DB_PATH` | `./data/hn10.sqlite` | Persistent SQLite file |
 | `POLL_INTERVAL_MS` | `60000` | Delay between front-page scrapes |
 | `MIN_POST_INTERVAL_MS` | `101000` | Minimum delay after a successful post |

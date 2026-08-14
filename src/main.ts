@@ -1,8 +1,10 @@
 import { Hn10Bot } from "./bot";
 import { loadConfig } from "./config";
 import { fetchHackerNews } from "./hn";
+import { formatStoryPost } from "./format";
 import { StoryStore } from "./store";
 import { TextlogClient } from "./textlog";
+import { ArticleSummarizer } from "./summarizer";
 
 const config = loadConfig();
 const store = new StoryStore(config.dbPath);
@@ -10,6 +12,10 @@ const textlog = new TextlogClient({
   token: config.textlogToken,
   baseUrl: config.textlogApiUrl,
   timeoutMs: config.requestTimeoutMs,
+});
+const summarizer = new ArticleSummarizer({
+  apiKey: config.openRouterApiKey,
+  model: config.openRouterModel,
 });
 const bot = new Hn10Bot({
   store,
@@ -19,6 +25,7 @@ const bot = new Hn10Bot({
       timeoutMs: config.requestTimeoutMs,
     }),
   publish: (body) => textlog.createPost(body),
+  summarize: (story) => summarizer.summarize(story.url),
   minPostIntervalMs: config.minPostIntervalMs,
 });
 
@@ -33,6 +40,8 @@ console.info("hn10 started", {
   dbPath: config.dbPath,
 });
 
+await backfillPublishedSummaries();
+
 try {
   while (!shutdown.signal.aborted) {
     try {
@@ -46,6 +55,27 @@ try {
 } finally {
   store.close();
   console.info("hn10 stopped");
+}
+
+async function backfillPublishedSummaries(): Promise<void> {
+  const posts = store.getPostsNeedingSummary();
+  if (posts.length === 0) return;
+
+  console.info(`backfilling summaries for ${posts.length} published posts`);
+  for (const story of posts) {
+    if (shutdown.signal.aborted) return;
+    try {
+      const summary = await summarizer.summarize(story.url);
+      await textlog.updatePost(
+        story.textlogPostId!,
+        formatStoryPost(story, summary),
+      );
+      store.markSummaryAdded(story.id, Date.now());
+      console.info("summary backfilled", { storyId: story.id });
+    } catch (error) {
+      console.error("summary backfill failed", { storyId: story.id, error });
+    }
+  }
 }
 
 function sleep(milliseconds: number, signal: AbortSignal): Promise<void> {

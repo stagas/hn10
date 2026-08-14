@@ -7,6 +7,7 @@ export interface BotDependencies {
   store: StoryStore;
   fetchStories: () => Promise<HnStory[]>;
   publish: (body: string) => Promise<TextlogPostResult>;
+  summarize?: (story: HnStory) => Promise<string>;
   now?: () => number;
   minPostIntervalMs?: number;
 }
@@ -48,9 +49,27 @@ export class Hn10Bot {
     const story = this.dependencies.store.claimNext(now);
     if (!story) return { kind: "idle", discovered };
 
+    let summary: string | undefined;
     try {
-      const result = await this.dependencies.publish(formatStoryPost(story));
-      this.dependencies.store.markPublished(story.id, this.now(), result.id);
+      summary = await this.dependencies.summarize?.(story);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.dependencies.store.markRetry(
+        story.id,
+        message,
+        this.now() + exponentialBackoffMs(story.attemptCount),
+      );
+      return { kind: "retry_scheduled", discovered, storyId: story.id, error: message };
+    }
+
+    try {
+      const result = await this.dependencies.publish(formatStoryPost(story, summary));
+      this.dependencies.store.markPublished(
+        story.id,
+        this.now(),
+        result.id,
+        this.dependencies.summarize !== undefined,
+      );
       return { kind: "published", discovered, storyId: story.id };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

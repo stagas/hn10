@@ -48,6 +48,20 @@ describe("Textlog post formatting", () => {
       "example.com/a%20b",
     );
   });
+
+  test("adds the tweet-sized summary above the story link", () => {
+    const post = formatStoryPost({
+      id: "42",
+      rank: 1,
+      title: "Story",
+      url: "https://example.com/story",
+      commentsUrl: "https://news.ycombinator.com/item?id=42",
+    }, "A compact summary.");
+
+    expect(post).toBe(
+      "A compact summary.\n\n[Story](example.com/story) [(comments)](news.ycombinator.com/item?id=42) #hn #hn10",
+    );
+  });
 });
 
 function makeFrontPage(

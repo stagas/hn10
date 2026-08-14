@@ -37,8 +37,22 @@ export class TextlogClient {
   }
 
   async createPost(body: string): Promise<TextlogPostResult> {
-    const response = await this.fetchImpl(`${this.baseUrl}/posts`, {
-      method: "POST",
+    const response = await this.request(`${this.baseUrl}/posts`, "POST", body);
+    const payload: unknown = await response.json();
+    return { id: extractPostId(payload) };
+  }
+
+  async updatePost(id: string, body: string): Promise<void> {
+    await this.request(
+      `${this.baseUrl}/posts/${encodeURIComponent(id)}`,
+      "PATCH",
+      body,
+    );
+  }
+
+  private async request(url: string, method: "POST" | "PATCH", body: string): Promise<Response> {
+    const response = await this.fetchImpl(url, {
+      method,
       headers: {
         accept: "application/json",
         authorization: `Bearer ${this.token}`,
@@ -58,8 +72,7 @@ export class TextlogClient {
       );
     }
 
-    const payload: unknown = await response.json();
-    return { id: extractPostId(payload) };
+    return response;
   }
 }
 

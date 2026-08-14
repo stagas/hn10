@@ -22,4 +22,5 @@ export interface StoredStory extends HnStory {
   postedAt: number | null;
   textlogPostId: string | null;
   lastError: string | null;
+  summaryAddedAt: number | null;
 }

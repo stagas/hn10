@@ -1,11 +1,12 @@
 import type { HnStory } from "./types";
 
-export function formatStoryPost(story: HnStory): string {
+export function formatStoryPost(story: HnStory, summary?: string): string {
   const title = escapeMarkdownText(story.title.replace(/\s+/g, " ").trim());
   const storyUrl = markdownUrlWithoutProtocol(story.url);
   const commentsUrl = markdownUrlWithoutProtocol(story.commentsUrl);
 
-  return `[${title}](${storyUrl}) [(comments)](${commentsUrl}) #hn #hn10`;
+  const link = `[${title}](${storyUrl}) [(comments)](${commentsUrl}) #hn #hn10`;
+  return summary ? `${summary}\n\n${link}` : link;
 }
 
 export function markdownUrlWithoutProtocol(value: string): string {

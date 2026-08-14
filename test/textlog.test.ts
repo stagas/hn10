@@ -44,4 +44,25 @@ describe("TextlogClient", () => {
       expect((error as TextlogHttpError).retryAfterMs).toBe(12_000);
     }
   });
+
+  test("updates an existing post using PATCH", async () => {
+    let requestUrl = "";
+    let requestInit: RequestInit | undefined;
+    const fetchImpl = (async (input, init) => {
+      requestUrl = String(input);
+      requestInit = init;
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+    const client = new TextlogClient({
+      token: "token",
+      baseUrl: "https://textlog.test/api/v1",
+      fetchImpl,
+    });
+
+    await client.updatePost("post/42", "updated body");
+
+    expect(requestUrl).toBe("https://textlog.test/api/v1/posts/post%2F42");
+    expect(requestInit?.method).toBe("PATCH");
+    expect(requestInit?.body).toBe(JSON.stringify({ body: "updated body" }));
+  });
 });

@@ -6,11 +6,15 @@ export interface Config {
   pollIntervalMs: number;
   minPostIntervalMs: number;
   requestTimeoutMs: number;
+  openRouterApiKey: string;
+  openRouterModel: string;
 }
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Config {
   const textlogToken = environment.TEXTLOG_TOKEN?.trim();
   if (!textlogToken) throw new Error("TEXTLOG_TOKEN is required");
+  const openRouterApiKey = environment.OPENROUTER_API_KEY?.trim();
+  if (!openRouterApiKey) throw new Error("OPENROUTER_API_KEY is required");
 
   return {
     textlogToken,
@@ -24,6 +28,9 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Config
       101_000,
     ),
     requestTimeoutMs: positiveInteger(environment.REQUEST_TIMEOUT_MS, 15_000),
+    openRouterApiKey,
+    openRouterModel:
+      environment.OPENROUTER_MODEL?.trim() || "google/gemma-4-26b-a4b-it:free",
   };
 }
 
