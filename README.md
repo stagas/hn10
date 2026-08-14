@@ -12,6 +12,7 @@ Tweet-sized article summary, shortened as needed so the complete post is at
 most 280 characters.
 
 [Story title](example.com/story) [(comments)](news.ycombinator.com/item?id=123) #hn #hn10
+Tweet-sized article summary.
 ```
 
 ## Behavior

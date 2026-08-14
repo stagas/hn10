@@ -10,10 +10,10 @@ export function formatStoryPost(story: HnStory, summary?: string): string {
   const link = `[${title}](${storyUrl}) [(comments)](${commentsUrl}) #hn #hn10`;
   if (!summary) return truncateWithEllipsis(link, MAX_POST_CHARACTERS);
 
-  const summaryLimit = MAX_POST_CHARACTERS - characterCount(link) - 2;
+  const summaryLimit = MAX_POST_CHARACTERS - characterCount(link) - 1;
   if (summaryLimit <= 0) return truncateWithEllipsis(link, MAX_POST_CHARACTERS);
 
-  return `${truncateWithEllipsis(summary, summaryLimit)}\n\n${link}`;
+  return `${link}\n${truncateWithEllipsis(summary, summaryLimit)}`;
 }
 
 export function markdownUrlWithoutProtocol(value: string): string {

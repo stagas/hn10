@@ -49,7 +49,7 @@ describe("Textlog post formatting", () => {
     );
   });
 
-  test("adds the tweet-sized summary above the story link", () => {
+  test("adds the tweet-sized summary after the story link", () => {
     const post = formatStoryPost({
       id: "42",
       rank: 1,
@@ -59,7 +59,7 @@ describe("Textlog post formatting", () => {
     }, "A compact summary.");
 
     expect(post).toBe(
-      "A compact summary.\n\n[Story](example.com/story) [(comments)](news.ycombinator.com/item?id=42) #hn #hn10",
+      "[Story](example.com/story) [(comments)](news.ycombinator.com/item?id=42) #hn #hn10\nA compact summary.",
     );
   });
 
@@ -73,8 +73,8 @@ describe("Textlog post formatting", () => {
     }, "x".repeat(280));
 
     expect(Array.from(post)).toHaveLength(280);
-    expect(post.split("\n\n")[0]?.endsWith("…")).toBe(true);
-    expect(post.endsWith("#hn #hn10")).toBe(true);
+    expect(post.startsWith("[Story](example.com/story)")).toBe(true);
+    expect(post.split("\n")[1]?.endsWith("…")).toBe(true);
   });
 });
 
