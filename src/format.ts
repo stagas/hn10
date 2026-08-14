@@ -7,13 +7,18 @@ export function formatStoryPost(story: HnStory, summary?: string): string {
   const storyUrl = markdownUrlWithoutProtocol(story.url);
   const commentsUrl = markdownUrlWithoutProtocol(story.commentsUrl);
 
-  const link = `[${title}](${storyUrl}) [(comments)](${commentsUrl}) #hn #hn10`;
-  if (!summary) return truncateWithEllipsis(link, MAX_POST_CHARACTERS);
+  const storyLink = `[${title}](${storyUrl})`;
+  const footer = `[(comments)](${commentsUrl}) #hn #hn10`;
+  const postWithoutSummary = `${storyLink}\n${footer}`;
+  if (!summary) return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
 
-  const summaryLimit = MAX_POST_CHARACTERS - characterCount(link) - 1;
-  if (summaryLimit <= 0) return truncateWithEllipsis(link, MAX_POST_CHARACTERS);
+  const summaryLimit =
+    MAX_POST_CHARACTERS - characterCount(storyLink) - characterCount(footer) - 2;
+  if (summaryLimit <= 0) {
+    return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
+  }
 
-  return `${link}\n${truncateWithEllipsis(summary, summaryLimit)}`;
+  return `${storyLink}\n${truncateWithEllipsis(summary, summaryLimit)}\n${footer}`;
 }
 
 export function markdownUrlWithoutProtocol(value: string): string {

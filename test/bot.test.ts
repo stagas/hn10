@@ -43,7 +43,7 @@ describe("Hn10Bot", () => {
       storyId: "11",
     });
     expect(posts).toEqual([
-      "[Story 11](example.com/11) [(comments)](news.ycombinator.com/item?id=11) #hn #hn10",
+      "[Story 11](example.com/11)\n[(comments)](news.ycombinator.com/item?id=11) #hn #hn10",
     ]);
     expect(store.getStory("11")?.status).toBe("published");
 

@@ -7,12 +7,13 @@ state.
 
 Posts have this shape:
 
-```md
-Tweet-sized article summary, shortened as needed so the complete post is at
-most 280 characters.
+The summary is shortened as needed so the complete post is at most 280
+characters:
 
-[Story title](example.com/story) [(comments)](news.ycombinator.com/item?id=123) #hn #hn10
+```md
+[Story title](example.com/story)
 Tweet-sized article summary.
+[(comments)](news.ycombinator.com/item?id=123) #hn #hn10
 ```
 
 ## Behavior
