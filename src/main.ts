@@ -1,7 +1,7 @@
 import { Hn10Bot } from "./bot";
 import { loadConfig } from "./config";
 import { fetchHackerNews } from "./hn";
-import { formatStoryPost } from "./format";
+import { CURRENT_POST_FORMAT_VERSION, formatStoryPost } from "./format";
 import { StoryStore } from "./store";
 import { TextlogClient } from "./textlog";
 import { ArticleSummarizer } from "./summarizer";
@@ -58,7 +58,7 @@ try {
 }
 
 async function backfillPublishedSummaries(): Promise<void> {
-  const posts = store.getPostsNeedingSummary();
+  const posts = store.getPostsNeedingFormatVersion(CURRENT_POST_FORMAT_VERSION);
   if (posts.length === 0) return;
 
   console.info(`backfilling summaries for ${posts.length} published posts`);
@@ -70,8 +70,11 @@ async function backfillPublishedSummaries(): Promise<void> {
         story.textlogPostId!,
         formatStoryPost(story, summary),
       );
-      store.markSummaryAdded(story.id, Date.now());
-      console.info("summary backfilled", { storyId: story.id });
+      store.markPostFormatVersion(story.id, CURRENT_POST_FORMAT_VERSION, Date.now());
+      console.info("post format backfilled", {
+        storyId: story.id,
+        version: CURRENT_POST_FORMAT_VERSION,
+      });
     } catch (error) {
       console.error("summary backfill failed", { storyId: story.id, error });
     }

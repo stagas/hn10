@@ -1,4 +1,4 @@
-import { formatStoryPost } from "./format";
+import { CURRENT_POST_FORMAT_VERSION, formatStoryPost } from "./format";
 import { TextlogHttpError, type TextlogPostResult } from "./textlog";
 import type { StoryStore } from "./store";
 import type { HnStory } from "./types";
@@ -68,7 +68,7 @@ export class Hn10Bot {
         story.id,
         this.now(),
         result.id,
-        this.dependencies.summarize !== undefined,
+        CURRENT_POST_FORMAT_VERSION,
       );
       return { kind: "published", discovered, storyId: story.id };
     } catch (error) {

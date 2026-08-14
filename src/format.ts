@@ -1,6 +1,7 @@
 import type { HnStory } from "./types";
 
 const MAX_POST_CHARACTERS = 280;
+export const CURRENT_POST_FORMAT_VERSION = 1;
 
 export function formatStoryPost(story: HnStory, summary?: string): string {
   const title = escapeMarkdownText(story.title.replace(/\s+/g, " ").trim());
@@ -18,7 +19,7 @@ export function formatStoryPost(story: HnStory, summary?: string): string {
     return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
   }
 
-  return `${storyLink}\n${truncateWithEllipsis(summary, summaryLimit)}\n${footer}`;
+  return `${storyLink}\n${truncateWithEllipsis(summary, summaryLimit)} ${footer}`;
 }
 
 export function markdownUrlWithoutProtocol(value: string): string {

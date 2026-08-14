@@ -18,6 +18,7 @@ interface StoryRow {
   textlog_post_id: string | null;
   last_error: string | null;
   summary_added_at: number | null;
+  post_format_version: number;
 }
 
 export class StoryStore {
@@ -57,6 +58,7 @@ export class StoryStore {
         ON stories(status, next_attempt_at, first_seen_at);
     `);
     this.addColumnIfMissing("summary_added_at", "INTEGER");
+    this.addColumnIfMissing("post_format_version", "INTEGER NOT NULL DEFAULT 0");
 
     // A process may have stopped after Textlog accepted a post but before the
     // acknowledgement was saved. Never retry that ambiguous request.
@@ -165,7 +167,7 @@ export class StoryStore {
     id: string,
     postedAt: number,
     textlogPostId: string | null,
-    summaryAdded = false,
+    postFormatVersion = 0,
   ): void {
     this.db
       .query(`
@@ -173,7 +175,8 @@ export class StoryStore {
         SET status = 'published',
             posted_at = $postedAt,
             textlog_post_id = $textlogPostId,
-            summary_added_at = $summaryAddedAt,
+            summary_added_at = $postedAt,
+            post_format_version = $postFormatVersion,
             last_error = NULL
         WHERE id = $id AND status = 'publishing'
       `)
@@ -181,7 +184,7 @@ export class StoryStore {
         id,
         postedAt,
         textlogPostId,
-        summaryAddedAt: summaryAdded ? postedAt : null,
+        postFormatVersion,
       });
     this.setMetadata("last_published_at", String(postedAt));
   }
@@ -227,27 +230,29 @@ export class StoryStore {
     return row?.count ?? 0;
   }
 
-  getPostsNeedingSummary(): StoredStory[] {
+  getPostsNeedingFormatVersion(version: number): StoredStory[] {
     return this.db
-      .query<StoryRow, []>(`
+      .query<StoryRow, { version: number }>(`
         SELECT * FROM stories
         WHERE status = 'published'
           AND textlog_post_id IS NOT NULL
-          AND summary_added_at IS NULL
+          AND post_format_version < $version
         ORDER BY posted_at ASC, rowid ASC
       `)
-      .all()
+      .all({ version })
       .map(mapStory);
   }
 
-  markSummaryAdded(id: string, addedAt: number): void {
+  markPostFormatVersion(id: string, version: number, updatedAt: number): void {
     this.db
       .query(`
         UPDATE stories
-        SET summary_added_at = $addedAt, last_error = NULL
+        SET summary_added_at = $updatedAt,
+            post_format_version = $version,
+            last_error = NULL
         WHERE id = $id AND status = 'published'
       `)
-      .run({ id, addedAt });
+      .run({ id, version, updatedAt });
   }
 
   close(): void {
@@ -324,5 +329,6 @@ function mapStory(row: StoryRow): StoredStory {
     textlogPostId: row.textlog_post_id,
     lastError: row.last_error,
     summaryAddedAt: row.summary_added_at,
+    postFormatVersion: row.post_format_version,
   };
 }

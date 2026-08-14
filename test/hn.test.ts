@@ -49,7 +49,7 @@ describe("Textlog post formatting", () => {
     );
   });
 
-  test("places the summary between the story link and post footer", () => {
+  test("places comments on the same line after the summary", () => {
     const post = formatStoryPost({
       id: "42",
       rank: 1,
@@ -59,7 +59,7 @@ describe("Textlog post formatting", () => {
     }, "A compact summary.");
 
     expect(post).toBe(
-      "[Story](example.com/story)\nA compact summary.\n[comments](news.ycombinator.com/item?id=42)",
+      "[Story](example.com/story)\nA compact summary. [comments](news.ycombinator.com/item?id=42)",
     );
   });
 
@@ -74,7 +74,7 @@ describe("Textlog post formatting", () => {
 
     expect(Array.from(post)).toHaveLength(280);
     expect(post.startsWith("[Story](example.com/story)")).toBe(true);
-    expect(post.split("\n")[1]?.endsWith("…")).toBe(true);
+    expect(post.split("\n")[1]?.includes("… [comments]")).toBe(true);
     expect(post.endsWith("[comments](news.ycombinator.com/item?id=42)")).toBe(true);
   });
 });
