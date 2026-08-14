@@ -64,6 +64,7 @@ bun run check
 | `TEXTLOG_TOKEN` | required | Revocable Textlog API key |
 | `OPENROUTER_API_KEY` | required | API key used to generate article summaries |
 | `OPENROUTER_MODEL` | `google/gemma-4-26b-a4b-it:free` | OpenRouter summary model |
+| `BACKFILL_INTERVAL_MS` | `12000` | Delay between summary backfill requests |
 | `CHROME_PATH` | auto-detected | Chrome or Chromium executable used to scrape articles |
 | `DB_PATH` | `./data/hn10.sqlite` | Persistent SQLite file |
 | `POLL_INTERVAL_MS` | `60000` | Delay between front-page scrapes |

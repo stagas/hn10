@@ -8,6 +8,7 @@ export interface Config {
   requestTimeoutMs: number;
   openRouterApiKey: string;
   openRouterModel: string;
+  backfillIntervalMs: number;
 }
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Config {
@@ -31,6 +32,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Config
     openRouterApiKey,
     openRouterModel:
       environment.OPENROUTER_MODEL?.trim() || "google/gemma-4-26b-a4b-it:free",
+    backfillIntervalMs: positiveInteger(environment.BACKFILL_INTERVAL_MS, 12_000),
   };
 }
 

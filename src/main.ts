@@ -62,7 +62,7 @@ async function backfillPublishedSummaries(): Promise<void> {
   if (posts.length === 0) return;
 
   console.info(`backfilling summaries for ${posts.length} published posts`);
-  for (const story of posts) {
+  for (const [index, story] of posts.entries()) {
     if (shutdown.signal.aborted) return;
     try {
       const summary = await summarizer.summarize(story.url);
@@ -77,6 +77,9 @@ async function backfillPublishedSummaries(): Promise<void> {
       });
     } catch (error) {
       console.error("summary backfill failed", { storyId: story.id, error });
+    }
+    if (index < posts.length - 1) {
+      await sleep(config.backfillIntervalMs, shutdown.signal);
     }
   }
 }
