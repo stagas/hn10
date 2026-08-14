@@ -110,3 +110,7 @@ host verification, pre-populate a known-host entry in the workflow or add a
 dedicated known-host secret. Deployments intentionally preserve the remote
 `.env`, `data/`, and `node_modules/` paths; in particular, rsync cannot delete
 the SQLite history.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
