@@ -62,6 +62,20 @@ describe("Textlog post formatting", () => {
       "A compact summary.\n\n[Story](example.com/story) [(comments)](news.ycombinator.com/item?id=42) #hn #hn10",
     );
   });
+
+  test("caps the complete post at 280 characters by shortening the summary", () => {
+    const post = formatStoryPost({
+      id: "42",
+      rank: 1,
+      title: "Story",
+      url: "https://example.com/story",
+      commentsUrl: "https://news.ycombinator.com/item?id=42",
+    }, "x".repeat(280));
+
+    expect(Array.from(post)).toHaveLength(280);
+    expect(post.split("\n\n")[0]?.endsWith("…")).toBe(true);
+    expect(post.endsWith("#hn #hn10")).toBe(true);
+  });
 });
 
 function makeFrontPage(

@@ -8,7 +8,8 @@ state.
 Posts have this shape:
 
 ```md
-Tweet-sized article summary (at most 280 characters).
+Tweet-sized article summary, shortened as needed so the complete post is at
+most 280 characters.
 
 [Story title](example.com/story) [(comments)](news.ycombinator.com/item?id=123) #hn #hn10
 ```
