@@ -51,6 +51,7 @@ export class ArticleSummarizer {
               'You may include a small number of relevant hashtags when they add useful context, but they count toward the 280-character limit.',
               'Do not invent information.',
               'If the article cannot be identified or accessed or does not contain a main article, output nothing.',
+              'If you don\'t know the article or not have enough information, output nothing.',
             ].join(' '),
           },
           { role: 'user', content: pageText },
