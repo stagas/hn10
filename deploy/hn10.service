@@ -1,0 +1,16 @@
+[Unit]
+Description=Post new Hacker News top-ten stories to Textlog
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/apps/hn10
+EnvironmentFile=%h/apps/hn10/.env
+ExecStart=%h/.bun/bin/bun run start
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
