@@ -1,7 +1,7 @@
 import type { HnStory } from "./types";
 
 const MAX_POST_CHARACTERS = 280;
-export const CURRENT_POST_FORMAT_VERSION = 1;
+export const CURRENT_POST_FORMAT_VERSION = 2;
 
 export function formatStoryPost(story: HnStory, summary?: string): string {
   const title = escapeMarkdownText(story.title.replace(/\s+/g, " ").trim());

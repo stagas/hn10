@@ -52,6 +52,7 @@ export class ArticleSummarizer {
               'Do not invent information.',
               'If the article cannot be identified or accessed or does not contain a main article, output nothing.',
               'If you don\'t know the article or not have enough information, output nothing.',
+              'If you are unable to access the content, output nothing.',
             ].join(' '),
           },
           { role: 'user', content: pageText },
