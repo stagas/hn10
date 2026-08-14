@@ -77,6 +77,20 @@ describe("Textlog post formatting", () => {
     expect(post.split("\n")[1]?.includes("… [comments]")).toBe(true);
     expect(post.endsWith("[comments](news.ycombinator.com/item?id=42)")).toBe(true);
   });
+
+  test("removes summary hashtags instead of truncating them", () => {
+    const post = formatStoryPost({
+      id: "42",
+      rank: 1,
+      title: "Story",
+      url: "https://example.com/story",
+      commentsUrl: "https://news.ycombinator.com/item?id=42",
+    }, `${"x".repeat(200)} #averylonghashtag`);
+
+    expect(Array.from(post).length).toBeLessThanOrEqual(280);
+    expect(post).not.toContain("#averylonghashtag");
+    expect(post).not.toMatch(/#[\p{L}\p{N}_]*…/u);
+  });
 });
 
 function makeFrontPage(

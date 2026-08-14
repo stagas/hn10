@@ -1,7 +1,7 @@
 import type { HnStory } from "./types";
 
 const MAX_POST_CHARACTERS = 280;
-export const CURRENT_POST_FORMAT_VERSION = 2;
+export const CURRENT_POST_FORMAT_VERSION = 3;
 
 export function formatStoryPost(story: HnStory, summary?: string): string {
   const title = escapeMarkdownText(story.title.replace(/\s+/g, " ").trim());
@@ -19,7 +19,9 @@ export function formatStoryPost(story: HnStory, summary?: string): string {
     return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
   }
 
-  return `${storyLink}\n${truncateWithEllipsis(summary, summaryLimit)} ${footer}`;
+  const fittedSummary = fitSummary(summary, summaryLimit);
+  if (!fittedSummary) return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
+  return `${storyLink}\n${fittedSummary} ${footer}`;
 }
 
 export function markdownUrlWithoutProtocol(value: string): string {
@@ -44,4 +46,14 @@ function truncateWithEllipsis(value: string, limit: number): string {
   if (characters.length <= limit) return value;
   if (limit === 1) return "…";
   return `${characters.slice(0, limit - 1).join("").trimEnd()}…`;
+}
+
+function fitSummary(summary: string, limit: number): string {
+  if (characterCount(summary) <= limit) return summary;
+
+  const withoutHashtags = summary
+    .replace(/#[\p{L}\p{N}_]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return truncateWithEllipsis(withoutHashtags, limit);
 }
