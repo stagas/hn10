@@ -29,7 +29,7 @@ describe("Hacker News parsing", () => {
 });
 
 describe("Textlog post formatting", () => {
-  test("builds protocol-free Markdown links and hashtags", () => {
+  test("builds protocol-free Markdown links", () => {
     const post = formatStoryPost({
       id: "42",
       rank: 1,
@@ -39,7 +39,7 @@ describe("Textlog post formatting", () => {
     });
 
     expect(post).toBe(
-      "[A \\[small\\] \\\\ test](example.com/a_%28b%29)\n[(comments)](news.ycombinator.com/item?id=42) #hn #hn10",
+      "[A \\[small\\] \\\\ test](example.com/a_%28b%29)\n[comments](news.ycombinator.com/item?id=42)",
     );
   });
 
@@ -59,7 +59,7 @@ describe("Textlog post formatting", () => {
     }, "A compact summary.");
 
     expect(post).toBe(
-      "[Story](example.com/story)\nA compact summary.\n[(comments)](news.ycombinator.com/item?id=42) #hn #hn10",
+      "[Story](example.com/story)\nA compact summary.\n[comments](news.ycombinator.com/item?id=42)",
     );
   });
 
@@ -75,7 +75,7 @@ describe("Textlog post formatting", () => {
     expect(Array.from(post)).toHaveLength(280);
     expect(post.startsWith("[Story](example.com/story)")).toBe(true);
     expect(post.split("\n")[1]?.endsWith("…")).toBe(true);
-    expect(post.endsWith("#hn #hn10")).toBe(true);
+    expect(post.endsWith("[comments](news.ycombinator.com/item?id=42)")).toBe(true);
   });
 });
 

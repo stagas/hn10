@@ -13,7 +13,7 @@ characters:
 ```md
 [Story title](example.com/story)
 Tweet-sized article summary.
-[(comments)](news.ycombinator.com/item?id=123) #hn #hn10
+[comments](news.ycombinator.com/item?id=123)
 ```
 
 ## Behavior

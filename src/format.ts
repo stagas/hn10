@@ -8,7 +8,7 @@ export function formatStoryPost(story: HnStory, summary?: string): string {
   const commentsUrl = markdownUrlWithoutProtocol(story.commentsUrl);
 
   const storyLink = `[${title}](${storyUrl})`;
-  const footer = `[(comments)](${commentsUrl}) #hn #hn10`;
+  const footer = `[comments](${commentsUrl})`;
   const postWithoutSummary = `${storyLink}\n${footer}`;
   if (!summary) return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
 
