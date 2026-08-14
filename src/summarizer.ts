@@ -66,6 +66,7 @@ export class ArticleSummarizer {
                 'If the article cannot be identified or accessed or does not contain a main article, output nothing.',
                 'If you don\'t know the article or not have enough information, output nothing.',
                 'If you are unable to access the content, output nothing.',
+                'If you get a Forbidden Error, output nothing.',
               ].join(' '),
             },
             { role: 'user', content: pageText },
