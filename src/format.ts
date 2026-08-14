@@ -5,7 +5,7 @@ export function formatStoryPost(story: HnStory): string {
   const storyUrl = markdownUrlWithoutProtocol(story.url);
   const commentsUrl = markdownUrlWithoutProtocol(story.commentsUrl);
 
-  return `[${title}](${storyUrl}) [comments](${commentsUrl}) #hn #hn10`;
+  return `[${title}](${storyUrl}) [(comments)](${commentsUrl}) #hn #hn10`;
 }
 
 export function markdownUrlWithoutProtocol(value: string): string {

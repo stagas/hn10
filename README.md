@@ -8,7 +8,7 @@ state.
 Posts have this shape:
 
 ```md
-[Story title](example.com/story) [comments](news.ycombinator.com/item?id=123) #hn #hn10
+[Story title](example.com/story) [(comments)](news.ycombinator.com/item?id=123) #hn #hn10
 ```
 
 ## Behavior

@@ -39,7 +39,7 @@ describe("Textlog post formatting", () => {
     });
 
     expect(post).toBe(
-      "[A \\[small\\] \\\\ test](example.com/a_%28b%29) [comments](news.ycombinator.com/item?id=42) #hn #hn10",
+      "[A \\[small\\] \\\\ test](example.com/a_%28b%29) [(comments)](news.ycombinator.com/item?id=42) #hn #hn10",
     );
   });
 
