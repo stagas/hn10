@@ -67,6 +67,7 @@ export class ArticleSummarizer {
                 'If you don\'t know the article or not have enough information, output nothing.',
                 'If you are unable to access the content, output nothing.',
                 'If you get a Forbidden Error, output nothing.',
+                'Never answer with text like "Please provide the webpage text you would like me to summarize.". Just output nothing.',
               ].join(' '),
             },
             { role: 'user', content: pageText },
