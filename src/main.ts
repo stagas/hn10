@@ -72,12 +72,17 @@ async function backfillPublishedSummaries(): Promise<void> {
       try {
         const post = await textlog.getPost(story.textlogPostId!);
         if (/\n[\t ]+\[comments\]\(/.test(post.body)) {
+          await sleep(config.backfillIntervalMs, shutdown.signal);
+          if (shutdown.signal.aborted) return;
           await textlog.updatePost(story.textlogPostId!, formatStoryPost(story));
           console.info("empty summary whitespace repaired", { storyId: story.id });
         }
         store.markPostFormatVersion(story.id, CURRENT_POST_FORMAT_VERSION, Date.now());
       } catch (error) {
         console.error("empty summary backfill failed", { storyId: story.id, error });
+      }
+      if (index < posts.length - 1) {
+        await sleep(config.backfillIntervalMs, shutdown.signal);
       }
       continue;
     }
