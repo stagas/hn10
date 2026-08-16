@@ -9,6 +9,10 @@ export interface TextlogPostResult {
   id: string | null;
 }
 
+export interface TextlogPost {
+  body: string;
+}
+
 export class TextlogHttpError extends Error {
   constructor(
     message: string,
@@ -50,17 +54,33 @@ export class TextlogClient {
     );
   }
 
-  private async request(url: string, method: "POST" | "PATCH", body: string): Promise<Response> {
-    const response = await this.fetchImpl(url, {
+  async getPost(id: string): Promise<TextlogPost> {
+    const response = await this.request(
+      `${this.baseUrl}/posts/${encodeURIComponent(id)}`,
+      "GET",
+    );
+    const payload: unknown = await response.json();
+    const body = extractPostBody(payload);
+    if (body === null) throw new Error("Textlog response did not contain a post body");
+    return { body };
+  }
+
+  private async request(
+    url: string,
+    method: "GET" | "POST" | "PATCH",
+    body?: string,
+  ): Promise<Response> {
+    const request: RequestInit = {
       method,
       headers: {
         accept: "application/json",
         authorization: `Bearer ${this.token}`,
         "content-type": "application/json",
       },
-      body: JSON.stringify({ body }),
       signal: AbortSignal.timeout(this.timeoutMs),
-    });
+    };
+    if (body !== undefined) request.body = JSON.stringify({ body });
+    const response = await this.fetchImpl(url, request);
 
     if (!response.ok) {
       const detail = await response.text();
@@ -74,6 +94,20 @@ export class TextlogClient {
 
     return response;
   }
+}
+
+function extractPostBody(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const record = payload as Record<string, unknown>;
+  if (typeof record.body === "string") return record.body;
+  for (const wrapper of ["data", "post"] as const) {
+    const wrapped = record[wrapper];
+    if (wrapped && typeof wrapped === "object") {
+      const body = (wrapped as Record<string, unknown>).body;
+      if (typeof body === "string") return body;
+    }
+  }
+  return null;
 }
 
 function parseRetryAfter(value: string | null): number | null {

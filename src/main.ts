@@ -68,6 +68,19 @@ async function backfillPublishedSummaries(): Promise<void> {
   console.info(`checking ${posts.length} published posts for format backfill`);
   for (const [index, story] of posts.entries()) {
     if (shutdown.signal.aborted) return;
+    if (story.postFormatVersion === 4) {
+      try {
+        const post = await textlog.getPost(story.textlogPostId!);
+        if (/\n[\t ]+\[comments\]\(/.test(post.body)) {
+          await textlog.updatePost(story.textlogPostId!, formatStoryPost(story));
+          console.info("empty summary whitespace repaired", { storyId: story.id });
+        }
+        store.markPostFormatVersion(story.id, CURRENT_POST_FORMAT_VERSION, Date.now());
+      } catch (error) {
+        console.error("empty summary backfill failed", { storyId: story.id, error });
+      }
+      continue;
+    }
     const needsPatch = story.postFormatVersion < 3 || legacyFormatCouldBreakLinks(story);
     if (!needsPatch) {
       store.markPostFormatVersion(story.id, CURRENT_POST_FORMAT_VERSION, Date.now());

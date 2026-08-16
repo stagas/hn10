@@ -65,4 +65,19 @@ describe("TextlogClient", () => {
     expect(requestInit?.method).toBe("PATCH");
     expect(requestInit?.body).toBe(JSON.stringify({ body: "updated body" }));
   });
+
+  test("reads an existing post body for targeted migrations", async () => {
+    const requests: Request[] = [];
+    const client = new TextlogClient({
+      token: "secret",
+      fetchImpl: (async (input, init) => {
+        requests.push(new Request(input, init));
+        return Response.json({ data: { body: "post body" } });
+      }) as typeof fetch,
+    });
+
+    expect(await client.getPost("post/42")).toEqual({ body: "post body" });
+    expect(requests[0]?.method).toBe("GET");
+    expect(requests[0]?.url).toEndWith("/posts/post%2F42");
+  });
 });

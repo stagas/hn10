@@ -1,7 +1,7 @@
 import type { HnStory } from "./types";
 
 const MAX_POST_CHARACTERS = 280;
-export const CURRENT_POST_FORMAT_VERSION = 4;
+export const CURRENT_POST_FORMAT_VERSION = 5;
 
 export function legacyFormatCouldBreakLinks(story: HnStory): boolean {
   const title = escapeMarkdownText(story.title.replace(/\s+/g, " ").trim());
@@ -85,9 +85,10 @@ function truncateWithEllipsis(value: string, limit: number): string {
 }
 
 function fitSummary(summary: string, limit: number): string {
-  if (characterCount(summary) <= limit) return summary;
+  const normalized = summary.replace(/\s+/g, " ").trim();
+  if (characterCount(normalized) <= limit) return normalized;
 
-  const withoutHashtags = summary
+  const withoutHashtags = normalized
     .replace(/#[\p{L}\p{N}_]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();

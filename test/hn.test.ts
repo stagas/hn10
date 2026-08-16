@@ -67,6 +67,23 @@ describe("Textlog post formatting", () => {
     );
   });
 
+  test("trims summary whitespace before comments", () => {
+    const story = {
+      id: "42",
+      rank: 1,
+      title: "Story",
+      url: "https://example.com/story",
+      commentsUrl: "https://news.ycombinator.com/item?id=42",
+    };
+
+    expect(formatStoryPost(story, "  A compact summary.  \n")).toBe(
+      "[Story](example.com/story)\nA compact summary. [comments](news.ycombinator.com/item?id=42)",
+    );
+    expect(formatStoryPost(story, " \n ")).toBe(
+      "[Story](example.com/story)\n[comments](news.ycombinator.com/item?id=42)",
+    );
+  });
+
   test("caps the complete post at 280 characters by shortening the summary", () => {
     const post = formatStoryPost({
       id: "42",
