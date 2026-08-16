@@ -1,27 +1,43 @@
 import type { HnStory } from "./types";
 
 const MAX_POST_CHARACTERS = 280;
-export const CURRENT_POST_FORMAT_VERSION = 3;
+export const CURRENT_POST_FORMAT_VERSION = 4;
 
-export function formatStoryPost(story: HnStory, summary?: string): string {
+export function legacyFormatCouldBreakLinks(story: HnStory): boolean {
   const title = escapeMarkdownText(story.title.replace(/\s+/g, " ").trim());
   const storyUrl = markdownUrlWithoutProtocol(story.url);
   const commentsUrl = markdownUrlWithoutProtocol(story.commentsUrl);
+  return characterCount(
+    `[${title}](${storyUrl})\n[comments](${commentsUrl})`,
+  ) > MAX_POST_CHARACTERS;
+}
 
-  const storyLink = `[${title}](${storyUrl})`;
-  const footer = `[comments](${commentsUrl})`;
+export function formatStoryPost(story: HnStory, summary?: string): string {
+  const title = story.title.replace(/\s+/g, " ").trim();
+  const storyUrl = markdownUrlWithoutProtocol(story.url);
+  const commentsUrl = markdownUrlWithoutProtocol(story.commentsUrl);
+
+  const fullFooter = `[comments](${commentsUrl})`;
+  const minimumStoryLinkLength = characterCount(`[…](${storyUrl})`);
+  const footer = minimumStoryLinkLength + 1 + characterCount(fullFooter) <= MAX_POST_CHARACTERS
+    ? fullFooter
+    : "";
+  const storyLimit = MAX_POST_CHARACTERS - (footer ? characterCount(footer) + 1 : 0);
+  const storyLink = fitStoryLink(title, storyUrl, storyLimit);
   const postWithoutSummary = `${storyLink}\n${footer}`;
-  if (!summary) return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
+  if (!summary) return footer ? postWithoutSummary : storyLink;
 
   const summaryLimit =
-    MAX_POST_CHARACTERS - characterCount(storyLink) - characterCount(footer) - 2;
+    MAX_POST_CHARACTERS - characterCount(storyLink) - characterCount(footer) - (footer ? 2 : 1);
   if (summaryLimit <= 0) {
-    return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
+    return footer ? postWithoutSummary : storyLink;
   }
 
   const fittedSummary = fitSummary(summary, summaryLimit);
-  if (!fittedSummary) return truncateWithEllipsis(postWithoutSummary, MAX_POST_CHARACTERS);
-  return `${storyLink}\n${fittedSummary} ${footer}`;
+  if (!fittedSummary) return footer ? postWithoutSummary : storyLink;
+  return footer
+    ? `${storyLink}\n${fittedSummary} ${footer}`
+    : `${storyLink}\n${fittedSummary}`;
 }
 
 export function markdownUrlWithoutProtocol(value: string): string {
@@ -39,6 +55,26 @@ function escapeMarkdownText(value: string): string {
 
 function characterCount(value: string): number {
   return Array.from(value).length;
+}
+
+function fitStoryLink(title: string, url: string, limit: number): string {
+  const linkOverhead = characterCount(`[](${url})`);
+  if (linkOverhead >= limit) {
+    return truncateWithEllipsis(escapeMarkdownText(title), limit);
+  }
+
+  const textLimit = limit - linkOverhead;
+  const fullTitle = escapeMarkdownText(title);
+  if (characterCount(fullTitle) <= textLimit) return `[${fullTitle}](${url})`;
+
+  const characters = Array.from(title);
+  let fitted = "…";
+  for (let length = 1; length <= characters.length; length += 1) {
+    const candidate = `${escapeMarkdownText(characters.slice(0, length).join(""))}…`;
+    if (characterCount(candidate) > textLimit) break;
+    fitted = candidate;
+  }
+  return `[${fitted}](${url})`;
 }
 
 function truncateWithEllipsis(value: string, limit: number): string {

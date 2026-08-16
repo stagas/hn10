@@ -1,7 +1,11 @@
 import { Hn10Bot } from "./bot";
 import { loadConfig } from "./config";
 import { fetchHackerNews } from "./hn";
-import { CURRENT_POST_FORMAT_VERSION, formatStoryPost } from "./format";
+import {
+  CURRENT_POST_FORMAT_VERSION,
+  formatStoryPost,
+  legacyFormatCouldBreakLinks,
+} from "./format";
 import { StoryStore } from "./store";
 import { TextlogClient } from "./textlog";
 import { ArticleSummarizer } from "./summarizer";
@@ -61,11 +65,20 @@ async function backfillPublishedSummaries(): Promise<void> {
   const posts = store.getPostsNeedingFormatVersion(CURRENT_POST_FORMAT_VERSION);
   if (posts.length === 0) return;
 
-  console.info(`backfilling summaries for ${posts.length} published posts`);
+  console.info(`checking ${posts.length} published posts for format backfill`);
   for (const [index, story] of posts.entries()) {
     if (shutdown.signal.aborted) return;
+    const needsPatch = story.postFormatVersion < 3 || legacyFormatCouldBreakLinks(story);
+    if (!needsPatch) {
+      store.markPostFormatVersion(story.id, CURRENT_POST_FORMAT_VERSION, Date.now());
+      continue;
+    }
     try {
-      const summary = await summarizer.summarize(story.url);
+      // Version 3 posts already had summaries. We cannot reconstruct their
+      // exact text locally, so repair broken links without inventing a new one.
+      const summary = story.postFormatVersion < 3
+        ? await summarizer.summarize(story.url)
+        : undefined;
       await textlog.updatePost(
         story.textlogPostId!,
         formatStoryPost(story, summary),
@@ -76,7 +89,7 @@ async function backfillPublishedSummaries(): Promise<void> {
         version: CURRENT_POST_FORMAT_VERSION,
       });
     } catch (error) {
-      console.error("summary backfill failed", { storyId: story.id, error });
+      console.error("post format backfill failed", { storyId: story.id, error });
     }
     if (index < posts.length - 1) {
       await sleep(config.backfillIntervalMs, shutdown.signal);

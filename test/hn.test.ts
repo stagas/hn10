@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { formatStoryPost, markdownUrlWithoutProtocol } from "../src/format";
+import {
+  formatStoryPost,
+  legacyFormatCouldBreakLinks,
+  markdownUrlWithoutProtocol,
+} from "../src/format";
 import { parseHackerNews } from "../src/hn";
 
 describe("Hacker News parsing", () => {
@@ -90,6 +94,50 @@ describe("Textlog post formatting", () => {
     expect(Array.from(post).length).toBeLessThanOrEqual(280);
     expect(post).not.toContain("#averylonghashtag");
     expect(post).not.toMatch(/#[\p{L}\p{N}_]*…/u);
+  });
+
+  test("shortens a long title without breaking either link", () => {
+    const post = formatStoryPost({
+      id: "42",
+      rank: 1,
+      title: "A [long] title ".repeat(30),
+      url: "https://example.com/story",
+      commentsUrl: "https://news.ycombinator.com/item?id=42",
+    });
+
+    expect(Array.from(post)).toHaveLength(280);
+    expect(post.split("\n")[0]?.startsWith("[A \\[long\\] title ")).toBe(true);
+    expect(post.split("\n")[0]?.endsWith("…](example.com/story)")).toBe(true);
+    expect(post.endsWith("[comments](news.ycombinator.com/item?id=42)")).toBe(true);
+  });
+
+  test("omits a comments link that cannot fit intact", () => {
+    const post = formatStoryPost({
+      id: "42",
+      rank: 1,
+      title: "Story",
+      url: "https://example.com/story",
+      commentsUrl: `https://news.ycombinator.com/${"x".repeat(280)}`,
+    });
+
+    expect(post).toBe("[Story](example.com/story)");
+    expect(post).not.toContain("comments");
+  });
+
+  test("detects only stories whose legacy formatting could break a link", () => {
+    const story = {
+      id: "42",
+      rank: 1,
+      title: "Story",
+      url: "https://example.com/story",
+      commentsUrl: "https://news.ycombinator.com/item?id=42",
+    };
+
+    expect(legacyFormatCouldBreakLinks(story)).toBe(false);
+    expect(legacyFormatCouldBreakLinks({
+      ...story,
+      title: "A very long title ".repeat(20),
+    })).toBe(true);
   });
 });
 
