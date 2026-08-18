@@ -62,6 +62,7 @@ export class ArticleSummarizer {
                 'Ignore navigation, menus, ads, cookie notices, footers, related links, repeated boilerplate, legal text, and disclaimers.',
                 'Do not use Markdown, HTML, labels, introductions, or commentary; output only the summary.',
                 'You may include a small number of relevant hashtags when they add useful context, but they count toward the 280-character limit.',
+                'Use hashtags inline in the paragraph where they are most relevant. Otherwise at the end.',
                 'Do not invent information.',
                 'If the article cannot be identified or accessed or does not contain a main article, output nothing.',
                 'If you don\'t know the article or not have enough information, output nothing.',
