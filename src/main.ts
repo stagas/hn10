@@ -62,12 +62,41 @@ try {
 }
 
 async function backfillPublishedSummaries(): Promise<void> {
-  const posts = store.getPostsNeedingFormatVersion(CURRENT_POST_FORMAT_VERSION);
+  const postsById = new Map(
+    [
+      ...store.getPostsNeedingFormatVersion(CURRENT_POST_FORMAT_VERSION),
+      ...store.getPublishedPostsWithoutSummary(),
+    ].map((story) => [story.id, story]),
+  );
+  const posts = [...postsById.values()].sort(
+    (left, right) => (left.postedAt ?? 0) - (right.postedAt ?? 0),
+  );
   if (posts.length === 0) return;
 
-  console.info(`checking ${posts.length} published posts for format backfill`);
+  console.info(`checking ${posts.length} published posts for summary backfill`);
   for (const [index, story] of posts.entries()) {
     if (shutdown.signal.aborted) return;
+    if (story.summaryAddedAt === null) {
+      try {
+        const summary = await summarizer.summarize(story.url);
+        if (!summary) {
+          console.info("summary still unavailable", { storyId: story.id });
+        } else {
+          await textlog.updatePost(
+            story.textlogPostId!,
+            formatStoryPost(story, summary),
+          );
+          store.markPostFormatVersion(story.id, CURRENT_POST_FORMAT_VERSION, Date.now());
+          console.info("summary backfilled", { storyId: story.id });
+        }
+      } catch (error) {
+        console.error("summary backfill failed", { storyId: story.id, error });
+      }
+      if (index < posts.length - 1) {
+        await sleep(config.backfillIntervalMs, shutdown.signal);
+      }
+      continue;
+    }
     if (story.postFormatVersion === 4) {
       try {
         const post = await textlog.getPost(story.textlogPostId!);

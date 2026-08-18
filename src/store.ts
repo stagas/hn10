@@ -168,6 +168,7 @@ export class StoryStore {
     postedAt: number,
     textlogPostId: string | null,
     postFormatVersion = 0,
+    hasSummary = false,
   ): void {
     this.db
       .query(`
@@ -175,7 +176,7 @@ export class StoryStore {
         SET status = 'published',
             posted_at = $postedAt,
             textlog_post_id = $textlogPostId,
-            summary_added_at = $postedAt,
+            summary_added_at = CASE WHEN $hasSummary THEN $postedAt ELSE NULL END,
             post_format_version = $postFormatVersion,
             last_error = NULL
         WHERE id = $id AND status = 'publishing'
@@ -185,6 +186,7 @@ export class StoryStore {
         postedAt,
         textlogPostId,
         postFormatVersion,
+        hasSummary: hasSummary ? 1 : 0,
       });
     this.setMetadata("last_published_at", String(postedAt));
   }
@@ -240,6 +242,19 @@ export class StoryStore {
         ORDER BY posted_at ASC, rowid ASC
       `)
       .all({ version })
+      .map(mapStory);
+  }
+
+  getPublishedPostsWithoutSummary(): StoredStory[] {
+    return this.db
+      .query<StoryRow, []>(`
+        SELECT * FROM stories
+        WHERE status = 'published'
+          AND textlog_post_id IS NOT NULL
+          AND summary_added_at IS NULL
+        ORDER BY posted_at ASC, rowid ASC
+      `)
+      .all()
       .map(mapStory);
   }
 

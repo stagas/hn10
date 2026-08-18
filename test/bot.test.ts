@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hn10Bot } from "../src/bot";
+import { CURRENT_POST_FORMAT_VERSION } from "../src/format";
 import { StoryStore } from "../src/store";
 import type { HnStory } from "../src/types";
 
@@ -87,6 +88,30 @@ describe("Hn10Bot", () => {
         minPostIntervalMs: 1,
       });
     }
+  });
+
+  test("tracks posts whose summarizer returned no content for startup backfill", async () => {
+    const store = new StoryStore(temporaryDatabase());
+    let currentStories = makeStories(1, 10);
+    let now = 1_000;
+    const bot = new Hn10Bot({
+      store,
+      fetchStories: async () => currentStories,
+      summarize: async () => "",
+      publish: async () => ({ id: "post-11" }),
+      now: () => now,
+      minPostIntervalMs: 1,
+    });
+
+    await bot.runOnce();
+    currentStories = makeStories(2, 11);
+    now += 10;
+    await bot.runOnce();
+
+    expect(store.getPublishedPostsWithoutSummary().map((story) => story.id)).toEqual(["11"]);
+    store.markPostFormatVersion("11", CURRENT_POST_FORMAT_VERSION, now);
+    expect(store.getPublishedPostsWithoutSummary()).toEqual([]);
+    store.close();
   });
 
   test("does not retry a request interrupted in its ambiguous in-flight state", () => {

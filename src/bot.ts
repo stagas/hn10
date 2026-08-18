@@ -69,6 +69,7 @@ export class Hn10Bot {
         this.now(),
         result.id,
         CURRENT_POST_FORMAT_VERSION,
+        Boolean(summary),
       );
       return { kind: "published", discovered, storyId: story.id };
     } catch (error) {

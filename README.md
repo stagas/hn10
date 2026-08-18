@@ -20,9 +20,9 @@ Tweet-sized article summary. [comments](news.ycombinator.com/item?id=123)
 - The first successful scrape is a silent baseline: its ten stories are saved
   but never posted.
 - Every later story first observed in the top ten is saved and queued once.
-- Published posts store a format version. On startup, posts with a saved
-  Textlog ID and an older format version are summarized, updated in place with
-  `PATCH`, and marked with the current version.
+- Published posts store their format version and whether a summary was added.
+  On startup, posts with a saved Textlog ID and no summary are summarized and
+  updated in place with `PATCH`; older post formats are repaired at the same time.
 - Published and baseline HN IDs remain in SQLite permanently, so restarts do
   not repost them.
 - The default minimum interval between successful posts is 101 seconds. Since
