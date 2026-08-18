@@ -43,6 +43,8 @@ export class ArticleSummarizer {
   }
 
   private async requestSummary(pageText: string): Promise<Response> {
+    let model = this.model
+
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const response = await this.fetchImpl('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -51,7 +53,7 @@ export class ArticleSummarizer {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: this.model,
+          model,
           messages: [
             {
               role: 'system',
@@ -78,6 +80,13 @@ export class ArticleSummarizer {
       })
 
       if (response.status !== 429 || attempt === 3) return response
+
+      const fallbackModel = paidGemmaFallback(model)
+      if (fallbackModel) {
+        model = fallbackModel
+        continue
+      }
+
       await delay(retryAfterMs(response.headers.get('retry-after')) ?? 12_000)
     }
 
@@ -136,6 +145,10 @@ export class ArticleSummarizer {
     if (!response.ok) throw new Error(`Failed to fetch article fallback: ${response.status}`)
     return textFromHtml(await response.text())
   }
+}
+
+function paidGemmaFallback(model: string): string | null {
+  return /^google\/gemma-.+:free$/.test(model) ? model.slice(0, -':free'.length) : null
 }
 
 function retryAfterMs(value: string | null): number | null {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { capTweetSummary } from "../src/summarizer";
+import { ArticleSummarizer, capTweetSummary } from "../src/summarizer";
 
 describe("tweet-sized summaries", () => {
   test("leaves summaries of at most 280 characters unchanged", () => {
@@ -20,5 +20,27 @@ describe("tweet-sized summaries", () => {
   test("turns unavailable-summary responses into an empty string", () => {
     expect(capTweetSummary("Summary not available.")).toBe("");
     expect(capTweetSummary("Summary is not available")).toBe("");
+  });
+});
+
+describe("OpenRouter model fallback", () => {
+  test("tries paid Gemma after the free model is rate limited", async () => {
+    const models: string[] = [];
+    const fetchImpl = (async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as { model: string };
+      models.push(body.model);
+      return models.length === 1
+        ? new Response("rate limited", { status: 429 })
+        : Response.json({ choices: [{ message: { content: "Summary" } }] });
+    }) as typeof fetch;
+    const summarizer = new ArticleSummarizer({ apiKey: "test", fetchImpl });
+
+    const response = await Reflect.get(summarizer, "requestSummary").call(summarizer, "article");
+
+    expect(response.ok).toBe(true);
+    expect(models).toEqual([
+      "google/gemma-4-26b-a4b-it:free",
+      "google/gemma-4-26b-a4b-it",
+    ]);
   });
 });
